@@ -1,0 +1,53 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver
+    ports:
+      - "1433:1433"
+    environment:
+      SA_PASSWORD: "@admin123#"
+      ACCEPT_EULA: "Y"
+    restart: always
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "@admin123#", "-Q", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - sqlvolume:/var/opt/mssql
+  
+  backend:
+    build:
+      context: .
+    container_name: backend
+    restart: always
+    environment:
+      ASPNETCORE_URLS: http://+
+      ASPNETCORE_ENVIRONMENT: Production
+    ports:
+      - 8080:80
+    depends_on:
+      - sqlserver
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile-Worker
+    container_name: worker
+    restart: always
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+    depends_on:
+      - sqlserver
+
+  web:
+    build:
+      context: ./front-end/rates-app
+    container_name: web
+    ports:
+      - 3000:3000
+    depends_on:
+      - backend
+
+volumes:
+  sqlvolume:

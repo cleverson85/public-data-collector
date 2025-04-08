@@ -1,0 +1,2 @@
+- dotnet ef migrations add InitialCreate -p src/PublicDataCollector.Application -s src/PublicDataCollector.WebApi
+- dotnet ef database update -s src/PublicDataCollector.WebApi
